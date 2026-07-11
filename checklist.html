@@ -20,6 +20,8 @@
   .btn{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:12px;border:0;border-radius:8px;padding:9px 14px;cursor:pointer;}
   .btn-red{background:var(--red);color:#fff;}
   .btn-ghost{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px var(--navy-line);}
+  .sync{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:#9fb0c9;margin-right:4px;white-space:nowrap;}
+  .sync.ok{color:#7fd6a2;} .sync.saving{color:var(--gold);} .sync.err{color:#ff9aa6;}
   .wrap{max-width:1220px;margin:0 auto;padding:22px 22px 80px;}
   .intro{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin:6px 0 20px;}
   .intro p{margin:0;color:#51596d;font-size:14px;max-width:60ch;}
@@ -74,6 +76,7 @@
       <div class="tag">Internal &middot; Fall 2026</div>
     </div>
     <div class="sp"></div>
+    <span class="sync" id="sync">Connecting…</span>
     <button class="btn btn-ghost" onclick="window.print()">Print</button>
     <button class="btn btn-red" id="exportBtn">Export CSV</button>
   </div>
@@ -266,27 +269,62 @@
 </div>
 
 <script>
-  var KEY='cbu_uniform_checklist_v1', store={};
-  try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ store={}; }
-  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+  var SB_URL='https://kpahawahmplukcgywgts.supabase.co';
+  var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwYWhhd2FobXBsdWtjZ3l3Z3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MDI0NDEsImV4cCI6MjA5OTM3ODQ0MX0.qluKMkpb3hHV1Zht9SxdU5Kv-sPH0NFB1cSXMzFaE0w';
+  var SB_TBL=SB_URL+'/rest/v1/uniform_checklist';
+  function sbH(extra){ var h={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}; if(extra){for(var k in extra)h[k]=extra[k];} return h; }
+  var syncEl=document.getElementById('sync');
+  function setSync(c,t){ if(syncEl){ syncEl.className='sync '+(c||''); syncEl.textContent=t; } }
+
   function colorize(el){
     var v=(el.value||'').trim().toUpperCase();
     el.classList.remove('youth','adult');
     if(!v) return;
     if(v.charAt(0)==='Y') el.classList.add('youth'); else el.classList.add('adult');
   }
-  document.querySelectorAll('[data-k]').forEach(function(el){
-    var k=el.dataset.k, isChk=el.type==='checkbox';
-    if(k in store){ if(isChk) el.checked=store[k]; else el.value=store[k]; }
+  function refresh(el){
     if(el.classList.contains('sz')) colorize(el);
     if(el.classList.contains('ord')) el.closest('tr').classList.toggle('done', el.checked);
-    el.addEventListener(isChk?'change':'input', function(){
-      store[k]= isChk? el.checked : el.value;
-      save();
-      if(el.classList.contains('sz')) colorize(el);
-      if(el.classList.contains('ord')) el.closest('tr').classList.toggle('done', el.checked);
-    });
+  }
+  var timers={};
+  function scheduleSave(el){
+    var k=el.dataset.k, isChk=el.type==='checkbox';
+    clearTimeout(timers[k]);
+    timers[k]=setTimeout(function(){ saveCell(el); }, isChk?0:500);
+  }
+  function saveCell(el){
+    var k=el.dataset.k, isChk=el.type==='checkbox';
+    var val= isChk ? (el.checked?'true':'') : el.value;
+    var tr=el.closest('tr'), tds=tr.querySelectorAll('td');
+    var team=el.closest('section.team').querySelector('h2').textContent.trim();
+    var player=(tds[2].textContent+' '+tds[3].textContent).trim();
+    var field=k.split('__').pop();
+    setSync('saving','Saving…');
+    fetch(SB_TBL, {method:'POST', headers:sbH({'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify([{id:k,team:team,player:player,field:field,value:val}])})
+      .then(function(r){ if(!r.ok) throw 0; setSync('ok','Saved'); })
+      .catch(function(){ setSync('err','Not saved — check connection'); });
+  }
+  document.querySelectorAll('[data-k]').forEach(function(el){
+    refresh(el);
+    var isChk=el.type==='checkbox';
+    el.addEventListener(isChk?'change':'input', function(){ refresh(el); scheduleSave(el); });
   });
+
+  // Load shared edits from Supabase
+  setSync('','Connecting…');
+  fetch(SB_TBL+'?select=id,value', {headers:sbH()})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(rows){
+      rows.forEach(function(row){
+        var el=document.querySelector('[data-k="'+row.id+'"]');
+        if(!el) return;
+        if(el.type==='checkbox') el.checked=(row.value==='true'); else el.value=(row.value==null?'':row.value);
+        refresh(el);
+      });
+      setSync('ok','Live · shared');
+    })
+    .catch(function(){ setSync('err','Offline — changes won\'t save'); });
   // Export current state to CSV
   document.getElementById('exportBtn').addEventListener('click', function(){
     var out=[['Team','Jersey Pkg','First','Last','#','Navy Pin Jersey','White Jersey','Navy Pin Pant','White Pant','Dry Fit','Sock','Hat','Ordered']];
