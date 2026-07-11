@@ -77,6 +77,7 @@
     </div>
     <div class="sp"></div>
     <span class="sync" id="sync">Connecting…</span>
+    <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
     <button class="btn btn-ghost" onclick="window.print()">Print</button>
     <button class="btn btn-red" id="exportBtn">Export CSV</button>
   </div>
@@ -311,20 +312,24 @@
     el.addEventListener(isChk?'change':'input', function(){ refresh(el); scheduleSave(el); });
   });
 
-  // Load shared edits from Supabase
-  setSync('','Connecting…');
-  fetch(SB_TBL+'?select=id,value', {headers:sbH()})
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(rows){
-      rows.forEach(function(row){
-        var el=document.querySelector('[data-k="'+row.id+'"]');
-        if(!el) return;
-        if(el.type==='checkbox') el.checked=(row.value==='true'); else el.value=(row.value==null?'':row.value);
-        refresh(el);
-      });
-      setSync('ok','Live · shared');
-    })
-    .catch(function(){ setSync('err','Offline — changes won\'t save'); });
+  // Load shared edits from Supabase (also used by the Refresh button)
+  function loadFromDB(label){
+    setSync('', label||'Refreshing…');
+    return fetch(SB_TBL+'?select=id,value', {headers:sbH()})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(rows){
+        rows.forEach(function(row){
+          var el=document.querySelector('[data-k="'+row.id+'"]');
+          if(!el || document.activeElement===el) return; // skip a field being edited
+          if(el.type==='checkbox') el.checked=(row.value==='true'); else el.value=(row.value==null?'':row.value);
+          refresh(el);
+        });
+        setSync('ok','Live · shared');
+      })
+      .catch(function(){ setSync('err','Offline — changes won\'t save'); });
+  }
+  loadFromDB('Connecting…');
+  document.getElementById('refreshBtn').addEventListener('click', function(){ loadFromDB('Refreshing…'); });
   // Export current state to CSV
   document.getElementById('exportBtn').addEventListener('click', function(){
     var out=[['Team','Jersey Pkg','First','Last','#','Navy Pin Jersey','White Jersey','Navy Pin Pant','White Pant','Dry Fit','Sock','Hat','Ordered']];
