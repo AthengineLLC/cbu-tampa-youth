@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A3 Daily Rotation</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#131c28;
+    --panel:#1b2736;
+    --line:#2c3b4e;
+    --ink:#f2f5f8;
+    --muted:#8fa2b6;
+    --field:#2e8054;
+    --cage:#b91e2d;
+    --class:#3a6ea5;
+    --lift:#d9a441;
+    --neutral:#33465c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;padding:28px 18px 48px}
+  .wrap{max-width:960px;margin:0 auto}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:3px solid var(--cage);padding-bottom:14px;margin-bottom:22px}
+  h1{font-family:'Barlow Condensed';font-weight:700;font-size:clamp(28px,5vw,44px);letter-spacing:.04em;text-transform:uppercase}
+  h1 span{color:var(--cage)}
+  .sub{font-family:'Barlow Condensed';font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-size:14px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin-bottom:18px}
+  .key{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--ink)}
+  .swatch{width:14px;height:14px;border-radius:4px}
+
+  .board{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 14px 22px;overflow-x:auto}
+  .grid{display:grid;grid-template-columns:64px repeat(3,1fr);gap:0 10px;min-width:640px;position:relative}
+  .colhead{font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:18px;text-align:center;padding:6px 0 4px;border-bottom:2px solid var(--line);margin-bottom:8px}
+  .colhead small{display:block;font-family:'Barlow';font-weight:500;font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:none}
+  .g1h{color:#ff8f9b}.g2h{color:#8ec9ea}.g3h{color:#f0c674}
+  .timecol{position:relative}
+  .lane{position:relative}
+  .tick{position:absolute;left:0;right:0;font-size:11px;color:var(--muted);font-weight:500;transform:translateY(-6px);text-align:right;padding-right:8px}
+  .tickline{position:absolute;left:64px;right:0;height:1px;background:var(--line);opacity:.5}
+  .pod{position:absolute;left:0;right:0;border-radius:8px;padding:6px 9px;font-size:12.5px;line-height:1.25;font-weight:600;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .pod .t{display:block;font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:14px}
+  .pod .d{display:block;font-weight:400;font-size:11px;opacity:.85}
+  .field{background:var(--field)}
+  .cage{background:var(--cage)}
+  .class{background:var(--class)}
+  .lift{background:var(--lift);color:#20180a}
+  .lift .d{opacity:.75}
+  .travel{background:transparent;border:1.5px dashed var(--muted);color:var(--muted);font-weight:500}
+  .travel .t{font-size:12px;color:var(--muted)}
+  .down{background:var(--neutral);color:#c9d6e3}
+  .down .t{font-size:12px}
+
+  h2{font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:24px;margin:34px 0 12px}
+  h2 em{font-style:normal;color:var(--cage)}
+  .days{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .daycard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .daycard h3{font-family:'Barlow Condensed';font-weight:700;font-size:20px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;border-bottom:2px solid var(--cage);display:inline-block;padding-bottom:2px}
+  .slotrow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .slotrow:last-child{border-bottom:none}
+  .slotrow .role{color:var(--muted);font-weight:500}
+  .chip{font-family:'Barlow Condensed';font-weight:700;font-size:15px;letter-spacing:.05em;padding:2px 12px;border-radius:999px;border:1.5px solid}
+  .c1{color:#ff8f9b;border-color:#ff8f9b}
+  .c2{color:#8ec9ea;border-color:#8ec9ea}
+  .c3{color:#f0c674;border-color:#f0c674}
+
+  .shuttle{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .shuttle h3{font-family:'Barlow Condensed';font-weight:700;font-size:20px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+  .runs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .run{border-left:4px solid var(--cage);background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px}
+  .run b{font-family:'Barlow Condensed';font-weight:700;font-size:16px;letter-spacing:.05em;display:block;margin-bottom:2px}
+  .run span{color:var(--muted)}
+
+  .totals{margin-top:26px;font-size:13px;color:var(--muted);line-height:1.6}
+  .totals b{color:var(--ink)}
+
+  @media(max-width:560px){
+    body{padding:18px 8px 36px}
+    .board{padding:12px 8px 16px}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>A3 <span>Daily Rotation</span></h1>
+  <div class="sub">3 Groups &middot; 9:00 AM – 3:30 PM &middot; Parent Drop at Field &middot; 2 Groups Lift</div>
+</header>
+
+<div class="legend">
+  <div class="key"><span class="swatch" style="background:var(--field)"></span>Field (off-site)</div>
+  <div class="key"><span class="swatch" style="background:var(--cage)"></span>Cage</div>
+  <div class="key"><span class="swatch" style="background:var(--class)"></span>Classroom</div>
+  <div class="key"><span class="swatch" style="background:var(--lift)"></span>Lift</div>
+  <div class="key"><span class="swatch" style="border:1.5px dashed var(--muted)"></span>Van</div>
+  <div class="key"><span class="swatch" style="background:var(--neutral)"></span>Down / Lunch</div>
+</div>
+
+<div class="board">
+  <div class="grid" id="grid">
+    <div></div>
+    <div class="colhead g1h">Group 1<small>Field AM &middot; parent drop-off &middot; lifts</small></div>
+    <div class="colhead g2h">Group 2<small>Field PM &middot; no lift today</small></div>
+    <div class="colhead g3h">Group 3<small>Individuals Day &middot; on-site &middot; lifts</small></div>
+
+    <div class="timecol" id="timecol" style="height:624px"></div>
+    <div class="lane" id="lane1" style="height:624px"></div>
+    <div class="lane" id="lane2" style="height:624px"></div>
+    <div class="lane" id="lane3" style="height:624px"></div>
+  </div>
+</div>
+
+<h2>3-Day <em>Rotation</em></h2>
+<div class="days">
+  <div class="daycard">
+    <h3>Day 1</h3>
+    <div class="slotrow"><span class="role">Field AM + Lift</span><span class="chip c1">Group 1</span></div>
+    <div class="slotrow"><span class="role">Field PM</span><span class="chip c2">Group 2</span></div>
+    <div class="slotrow"><span class="role">Individuals Day + Lift</span><span class="chip c3">Group 3</span></div>
+  </div>
+  <div class="daycard">
+    <h3>Day 2</h3>
+    <div class="slotrow"><span class="role">Field AM + Lift</span><span class="chip c3">Group 3</span></div>
+    <div class="slotrow"><span class="role">Field PM</span><span class="chip c1">Group 1</span></div>
+    <div class="slotrow"><span class="role">Individuals Day + Lift</span><span class="chip c2">Group 2</span></div>
+  </div>
+  <div class="daycard">
+    <h3>Day 3</h3>
+    <div class="slotrow"><span class="role">Field AM + Lift</span><span class="chip c2">Group 2</span></div>
+    <div class="slotrow"><span class="role">Field PM</span><span class="chip c3">Group 3</span></div>
+    <div class="slotrow"><span class="role">Individuals Day + Lift</span><span class="chip c1">Group 1</span></div>
+  </div>
+</div>
+
+<div class="shuttle">
+  <h3>Van Runs &mdash; Only 2 Round Trips</h3>
+  <div class="runs">
+    <div class="run"><b>Run 1 &middot; 11:00</b><span>Drive Field PM group out, drop them, pick up Field AM group &middot; back 11:30</span></div>
+    <div class="run"><b>Run 2 &middot; 1:15</b><span>Pick up Field PM group &middot; back by 1:30</span></div>
+    <div class="run"><b>Driver is free all morning</b><span>Field AM group is dropped at the field by parents at 9:00</span></div>
+  </div>
+</div>
+
+<div class="totals">
+  <b>Daily totals:</b> Field AM group &mdash; field 2 hrs, cage 1.5, classroom 1.5, lift 1 (full day, ends 3:30). Field PM group &mdash; classroom 1.75, field 2, cage 1.5 (ends 3:15, no lift). On-Site group &mdash; cage 2.5 straight into classroom 1.5, lift 1, plus recovery (ends 3:15).
+  <br><b>Over the 3-day cycle:</b> every group hits the field 2&times;, lifts 2&times;, and gets cage + classroom every day. The only day a group skips lifting is its Field PM day. No space is ever double-booked.
+</div>
+
+</div>
+
+<script>
+const SCALE = 1.6; // px per minute
+const START = 9 * 60; // 9:00 AM
+
+function mins(t){
+  const [h,m] = t.split(':').map(Number);
+  let total = h*60 + m;
+  if (h < 8) total += 12*60;
+  return total - START;
+}
+
+function pod(lane, start, end, cls, title, detail){
+  const el = document.createElement('div');
+  el.className = 'pod ' + cls;
+  el.style.top = (mins(start)*SCALE) + 'px';
+  el.style.height = ((mins(end)-mins(start))*SCALE - 4) + 'px';
+  el.innerHTML = '<span class="t">'+title+'</span>' + (detail ? '<span class="d">'+detail+'</span>' : '');
+  document.getElementById(lane).appendChild(el);
+}
+
+const timecol = document.getElementById('timecol');
+const labels = ['9:00','9:30','10:00','10:30','11:00','11:30','12:00','12:30','1:00','1:30','2:00','2:30','3:00','3:30'];
+labels.forEach(t=>{
+  const y = mins(t)*SCALE;
+  const tick = document.createElement('div');
+  tick.className='tick'; tick.style.top=y+'px'; tick.textContent=t;
+  timecol.appendChild(tick);
+  const line = document.createElement('div');
+  line.className='tickline'; line.style.top=y+'px';
+  document.getElementById('grid').appendChild(line);
+});
+
+// GROUP 1 — Field AM (parents drop at field, lifts)
+pod('lane1','9:00','11:00','field','Field','2 hrs &middot; parent drop-off');
+pod('lane1','11:00','11:15','down','Lunch at Field','eat while waiting for van');
+pod('lane1','11:15','11:30','travel','&#8592; Van','back to facility');
+pod('lane1','11:30','1:00','cage','Cage','1.5 hrs');
+pod('lane1','1:00','2:30','class','Classroom','1.5 hrs');
+pod('lane1','2:30','3:30','lift','Lift','1 hr');
+
+// GROUP 2 — Field PM (no lift today)
+pod('lane2','9:00','10:45','class','Classroom','1.75 hrs');
+pod('lane2','10:45','11:00','down','Load Up','');
+pod('lane2','11:00','11:15','travel','&#8594; Van','to field');
+pod('lane2','11:15','1:15','field','Field','2 hrs');
+pod('lane2','1:15','1:30','travel','&#8592; Van','back');
+pod('lane2','1:30','1:45','down','Lunch','');
+pod('lane2','1:45','3:15','cage','Cage','1.5 hrs');
+
+// GROUP 3 — On-Site (lifts)
+pod('lane3','9:00','11:30','cage','Cage','2.5 hrs &middot; no break');
+pod('lane3','11:30','1:00','class','Classroom','1.5 hrs &middot; straight from cage');
+pod('lane3','1:00','1:30','down','Lunch','');
+pod('lane3','1:30','2:30','lift','Lift','1 hr');
+pod('lane3','2:30','3:15','down','Arm Care / Recovery','or early release');
+</script>
+</body>
+</html>
