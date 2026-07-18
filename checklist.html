@@ -22,6 +22,21 @@
   .btn-ghost{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px var(--navy-line);}
   .sync{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:#9fb0c9;margin-right:4px;white-space:nowrap;}
   .sync.ok{color:#7fd6a2;} .sync.saving{color:var(--gold);} .sync.err{color:#ff9aa6;}
+  .actions{display:flex;align-items:center;gap:10px;}
+  .hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;width:46px;height:40px;padding:0;background:transparent;border:1.5px solid var(--navy-line);border-radius:8px;cursor:pointer;}
+  .hamburger span{display:block;width:20px;height:2px;margin:0 auto;background:#fff;border-radius:2px;transition:transform .2s,opacity .2s;}
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+  @media (max-width:700px){
+    .bar{position:relative;padding:12px 16px;gap:10px;}
+    .bar .ttl{font-size:14px;}
+    .hamburger{display:flex;}
+    .actions{position:absolute;top:100%;left:12px;right:12px;margin-top:8px;flex-direction:column;align-items:stretch;gap:8px;padding:12px;background:var(--navy-2);border:1px solid var(--navy-line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:30;display:none;}
+    .actions.open{display:flex;}
+    .actions .sync{margin:0 0 2px;text-align:center;}
+    .actions .btn{width:100%;text-align:center;padding:12px;font-size:13px;}
+  }
   .wrap{max-width:1220px;margin:0 auto;padding:22px 22px 80px;}
   .intro{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin:6px 0 20px;}
   .intro p{margin:0;color:#51596d;font-size:14px;max-width:60ch;}
@@ -78,10 +93,13 @@
       <div class="tag">Internal &middot; Fall 2026</div>
     </div>
     <div class="sp"></div>
-    <span class="sync" id="sync">Connecting…</span>
-    <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
-    <button class="btn btn-ghost" onclick="window.print()">Print</button>
-    <button class="btn btn-red" id="exportBtn">Export CSV</button>
+    <button class="hamburger" id="menuBtn" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="actions" id="actions">
+      <span class="sync" id="sync">Connecting…</span>
+      <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
+      <button class="btn btn-ghost" onclick="window.print()">Print</button>
+      <button class="btn btn-red" id="exportBtn">Export CSV</button>
+    </div>
   </div>
 </header>
 
@@ -284,6 +302,23 @@
   window.addEventListener('load', setHH);
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(setHH);
   setTimeout(setHH, 400);
+
+  // Mobile hamburger menu toggle
+  (function(){
+    var mb=document.getElementById('menuBtn'), ac=document.getElementById('actions');
+    if(!mb||!ac) return;
+    function close(){ ac.classList.remove('open'); mb.classList.remove('open'); mb.setAttribute('aria-expanded','false'); }
+    mb.addEventListener('click', function(e){
+      e.stopPropagation();
+      var open=ac.classList.toggle('open');
+      mb.classList.toggle('open', open);
+      mb.setAttribute('aria-expanded', open?'true':'false');
+    });
+    document.addEventListener('click', function(e){
+      if(ac.classList.contains('open') && !ac.contains(e.target) && !mb.contains(e.target)) close();
+    });
+    ac.addEventListener('click', function(e){ if(e.target.closest('.btn')) close(); });
+  })();
 
   function colorize(el){
     var v=(el.value||'').trim().toUpperCase();
