@@ -22,21 +22,6 @@
   .btn-ghost{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px var(--navy-line);}
   .sync{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:#9fb0c9;margin-right:4px;white-space:nowrap;}
   .sync.ok{color:#7fd6a2;} .sync.saving{color:var(--gold);} .sync.err{color:#ff9aa6;}
-  .actions{display:flex;align-items:center;gap:10px;}
-  .hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;width:46px;height:40px;padding:0;background:transparent;border:1.5px solid var(--navy-line);border-radius:8px;cursor:pointer;}
-  .hamburger span{display:block;width:20px;height:2px;margin:0 auto;background:#fff;border-radius:2px;transition:transform .2s,opacity .2s;}
-  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
-  .hamburger.open span:nth-child(2){opacity:0;}
-  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
-  @media (max-width:700px){
-    .bar{position:relative;padding:12px 16px;gap:10px;}
-    .bar .ttl{font-size:14px;}
-    .hamburger{display:flex;}
-    .actions{position:absolute;top:100%;left:12px;right:12px;margin-top:8px;flex-direction:column;align-items:stretch;gap:8px;padding:12px;background:var(--navy-2);border:1px solid var(--navy-line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:30;display:none;}
-    .actions.open{display:flex;}
-    .actions .sync{margin:0 0 2px;text-align:center;}
-    .actions .btn{width:100%;text-align:center;padding:12px;font-size:13px;}
-  }
   .wrap{max-width:1220px;margin:0 auto;padding:22px 22px 80px;}
   .intro{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin:6px 0 20px;}
   .intro p{margin:0;color:#51596d;font-size:14px;max-width:60ch;}
@@ -55,7 +40,6 @@
   @media (min-width:1040px){.tbl-wrap{overflow:visible;}}
   table{border-collapse:collapse;width:100%;min-width:900px;}
   thead th{position:sticky;top:var(--hh,58px);z-index:5;background:#eef1f7;color:var(--navy);font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px;font-size:11px;font-weight:700;padding:9px 8px;border-bottom:2px solid #d7dce6;text-align:center;white-space:nowrap;}
-  @media (max-width:1039px){thead th{position:static !important;top:auto !important;}}
   th.szh{padding:6px 8px;}
   th.szh .h1{display:block;font-size:9.5px;color:var(--red);line-height:1.1;}
   th.szh .h2{display:block;font-size:11.5px;line-height:1.15;}
@@ -77,6 +61,25 @@
   input.sz.adult{background:#d9e6f7;border-color:#b9cded;color:#1d4e89;}
   input.ord{width:18px;height:18px;accent-color:var(--red);cursor:pointer;}
   .foot{margin-top:34px;color:#8a93a6;font-size:12px;text-align:center;}
+  .btn-navy{background:transparent;color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--navy-line);}
+  .btn-navy:hover{background:var(--navy);color:#fff;}
+  .tally-overlay{position:fixed;inset:0;background:rgba(12,26,51,.55);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:70px 16px 30px;overflow-y:auto;}
+  .tally-overlay.open{display:flex;}
+  .tally{background:#fff;border-radius:14px;max-width:780px;width:100%;box-shadow:0 18px 50px rgba(12,26,51,.35);overflow:hidden;}
+  .tally-head{display:flex;align-items:center;gap:12px;background:var(--navy);color:#fff;padding:14px 20px;}
+  .tally-head h3{margin:0;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:16px;}
+  .tally-head .x{margin-left:auto;background:transparent;border:0;color:#9fb0c9;font-size:24px;line-height:1;cursor:pointer;padding:0 4px;}
+  .tally-head .x:hover{color:#fff;}
+  .tally-body{padding:18px 20px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;}
+  .tally-card{border:1px solid #e2e6ee;border-radius:10px;overflow:hidden;align-self:start;}
+  .tally-card h4{margin:0;background:#eef1f7;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:12px;color:var(--navy);padding:9px 12px;display:flex;justify-content:space-between;gap:8px;border-bottom:2px solid #d7dce6;}
+  .tally-card h4 .tot{color:var(--red);}
+  .tally-card ul{list-style:none;margin:0;padding:4px 0;}
+  .tally-card li{display:flex;justify-content:space-between;gap:10px;padding:5px 12px;font-size:13px;color:var(--navy);}
+  .tally-card li:nth-child(even){background:#fafbfd;}
+  .tally-card li .c{font-family:'Oswald',sans-serif;font-weight:700;}
+  .tally-card li.blank{color:#8a93a6;font-style:italic;}
+  .tally-note{padding:6px 20px 18px;color:#8a93a6;font-size:12px;}
   @media print{
     header,.intro .legend,.btn{display:none!important;}
     body{background:#fff;} .team{page-break-inside:avoid;}
@@ -93,13 +96,10 @@
       <div class="tag">Internal &middot; Fall 2026</div>
     </div>
     <div class="sp"></div>
-    <button class="hamburger" id="menuBtn" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
-    <div class="actions" id="actions">
-      <span class="sync" id="sync">Connecting…</span>
-      <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
-      <button class="btn btn-ghost" onclick="window.print()">Print</button>
-      <button class="btn btn-red" id="exportBtn">Export CSV</button>
-    </div>
+    <span class="sync" id="sync">Connecting…</span>
+    <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
+    <button class="btn btn-ghost" onclick="window.print()">Print</button>
+    <button class="btn btn-red" id="exportBtn">Export CSV</button>
   </div>
 </header>
 
@@ -114,6 +114,18 @@
   <div class="filterbar">
     <label for="teamFilter">Show team</label>
     <select id="teamFilter"><option value="__all">All Teams</option></select>
+    <button class="btn btn-navy" id="tallyBtn">Size Totals</button>
+  </div>
+
+  <div class="tally-overlay" id="tallyOverlay">
+    <div class="tally">
+      <div class="tally-head">
+        <h3>Size Totals &mdash; All Teams</h3>
+        <button class="x" id="tallyClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="tally-body" id="tallyBody"></div>
+      <div class="tally-note">Totals count every roster row across all teams and update live as sizes are edited.</div>
+    </div>
   </div>
   
   <section class="team">
@@ -303,23 +315,6 @@
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(setHH);
   setTimeout(setHH, 400);
 
-  // Mobile hamburger menu toggle
-  (function(){
-    var mb=document.getElementById('menuBtn'), ac=document.getElementById('actions');
-    if(!mb||!ac) return;
-    function close(){ ac.classList.remove('open'); mb.classList.remove('open'); mb.setAttribute('aria-expanded','false'); }
-    mb.addEventListener('click', function(e){
-      e.stopPropagation();
-      var open=ac.classList.toggle('open');
-      mb.classList.toggle('open', open);
-      mb.setAttribute('aria-expanded', open?'true':'false');
-    });
-    document.addEventListener('click', function(e){
-      if(ac.classList.contains('open') && !ac.contains(e.target) && !mb.contains(e.target)) close();
-    });
-    ac.addEventListener('click', function(e){ if(e.target.closest('.btn')) close(); });
-  })();
-
   function colorize(el){
     var v=(el.value||'').trim().toUpperCase();
     el.classList.remove('youth','adult');
@@ -414,6 +409,68 @@
     }
     sel.addEventListener('change', apply);
     apply();
+  })();
+  // Size totals popup (White Pant, Dry Fit, Sock, Hat — all teams combined)
+  (function(){
+    var FIELDS=[
+      {key:'whitepant',label:'White Pant'},
+      {key:'dryfit',label:'Dry Fit'},
+      {key:'sock',label:'Sock'},
+      {key:'hat',label:'Hat'}
+    ];
+    var ORDER=['YXS','YS','YM','YL','YXL','XS','S','S/M','M','M/L','L','L/XL','XL','XXL','2XL','3XL','SMALL','MEDIUM','LARGE','XLARGE'];
+    var overlay=document.getElementById('tallyOverlay');
+    var body=document.getElementById('tallyBody');
+    function norm(v){
+      v=(v||'').trim();
+      if(!v) return '';
+      var cut=v.indexOf('\u2013'); if(cut<0) cut=v.indexOf(' - ');
+      if(cut>0) v=v.slice(0,cut);
+      return v.trim().toUpperCase();
+    }
+    function build(){
+      body.innerHTML='';
+      FIELDS.forEach(function(f){
+        var counts={}, blank=0, filled=0;
+        document.querySelectorAll('input.sz[data-k$="__'+f.key+'"]').forEach(function(el){
+          var v=norm(el.value);
+          if(!v){ blank++; return; }
+          filled++;
+          counts[v]=(counts[v]||0)+1;
+        });
+        var sizes=Object.keys(counts).sort(function(a,b){
+          var ia=ORDER.indexOf(a), ib=ORDER.indexOf(b);
+          if(ia<0&&ib<0) return a<b?-1:1;
+          if(ia<0) return 1;
+          if(ib<0) return -1;
+          return ia-ib;
+        });
+        var card=document.createElement('div'); card.className='tally-card';
+        var h=document.createElement('h4');
+        h.innerHTML='<span>'+f.label+'</span><span class="tot">'+filled+'</span>';
+        card.appendChild(h);
+        var ul=document.createElement('ul');
+        sizes.forEach(function(s){
+          var li=document.createElement('li');
+          li.innerHTML='<span>'+s+'</span><span class="c">'+counts[s]+'</span>';
+          ul.appendChild(li);
+        });
+        if(blank>0){
+          var li=document.createElement('li'); li.className='blank';
+          li.innerHTML='<span>Blank</span><span class="c">'+blank+'</span>';
+          ul.appendChild(li);
+        }
+        card.appendChild(ul);
+        body.appendChild(card);
+      });
+    }
+    function open(){ build(); overlay.classList.add('open'); }
+    function close(){ overlay.classList.remove('open'); }
+    document.getElementById('tallyBtn').addEventListener('click', open);
+    document.getElementById('tallyClose').addEventListener('click', close);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) close(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+    document.addEventListener('input', function(){ if(overlay.classList.contains('open')) build(); });
   })();
 </script>
 </body>
