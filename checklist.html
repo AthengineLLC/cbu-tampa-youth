@@ -61,6 +61,11 @@
   input.sz.adult{background:#d9e6f7;border-color:#b9cded;color:#1d4e89;}
   input.ord{width:18px;height:18px;accent-color:var(--red);cursor:pointer;}
   .foot{margin-top:34px;color:#8a93a6;font-size:12px;text-align:center;}
+  .team-bar .btn-check{margin-left:auto;align-self:center;background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px var(--navy-line);white-space:nowrap;}
+  .team-bar .btn-check:hover{background:#fff;color:var(--navy);}
+  .team-bar .btn-check.all{background:var(--red);color:#fff;box-shadow:none;}
+  .team-bar .btn-check.all:hover{background:#a50d26;color:#fff;}
+  @media print{.team-bar .btn-check{display:none;}}
   .btn-navy{background:transparent;color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--navy-line);}
   .btn-navy:hover{background:var(--navy);color:#fff;}
   .tally-overlay{position:fixed;inset:0;background:rgba(12,26,51,.55);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:70px 16px 30px;overflow-y:auto;}
@@ -486,6 +491,21 @@
       .then(function(r){ if(!r.ok) throw 0; setSync('ok','Saved'); })
       .catch(function(){ setSync('err','Not saved — check connection'); });
   }
+  function saveMany(els){
+    if(!els.length) return;
+    var rows=els.map(function(el){
+      var tr=el.closest('tr'), tds=tr.querySelectorAll('td');
+      var team=el.closest('section.team').querySelector('h2').textContent.trim();
+      var player=tr.dataset.player||((tds[2]?tds[2].textContent:'')+' '+(tds[3]?tds[3].textContent:'')).trim();
+      return {id:el.dataset.k, team:team, player:player, field:el.dataset.k.split('__').pop(),
+              value:(el.type==='checkbox'?(el.checked?'true':''):el.value)};
+    });
+    setSync('saving','Saving\u2026');
+    return fetch(SB_TBL,{method:'POST',headers:sbH({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify(rows)})
+      .then(function(r){ if(!r.ok) throw 0; setSync('ok','Saved'); })
+      .catch(function(){ setSync('err','Not saved \u2014 check connection'); });
+  }
+
   document.querySelectorAll('[data-k]').forEach(function(el){
     refresh(el);
     var isChk=el.type==='checkbox';
@@ -506,6 +526,7 @@
         });
         if(window.normalizeSocks) window.normalizeSocks();
         if(window.rebuildTally) window.rebuildTally();
+        if(window.syncCheckAll) window.syncCheckAll();
         setSync('ok','Live · shared');
       })
       .catch(function(){ setSync('err','Offline — changes won\'t save'); });
@@ -670,6 +691,41 @@
     document.addEventListener('input', function(){ if(overlay.classList.contains('open')) build(); });
     progSel.addEventListener('change', function(){ if(overlay.classList.contains('open')) build(); });
     window.rebuildTally=function(){ if(overlay.classList.contains('open')) build(); };
+  })();
+
+  // ---------- Per-team "Check All" ordered buttons ----------
+  (function(){
+    var syncers=[];
+    document.querySelectorAll('section.team').forEach(function(sec){
+      var bar=sec.querySelector('.team-bar');
+      if(!bar) return;
+      var btn=document.createElement('button');
+      btn.type='button';
+      btn.className='btn btn-check';
+      bar.appendChild(btn);
+      function boxes(){ return [].slice.call(sec.querySelectorAll('input.ord')); }
+      function sync(){
+        var b=boxes(), n=0;
+        b.forEach(function(x){ if(x.checked) n++; });
+        var all=(b.length>0 && n===b.length);
+        btn.textContent = all ? 'Uncheck All' : 'Check All \u00b7 '+n+'/'+b.length;
+        btn.classList.toggle('all', all);
+      }
+      btn.addEventListener('click', function(){
+        var b=boxes(), all=true;
+        b.forEach(function(x){ if(!x.checked) all=false; });
+        var target=!all, changed=[];
+        b.forEach(function(x){ if(x.checked!==target){ x.checked=target; refresh(x); changed.push(x); } });
+        sync();
+        saveMany(changed);
+      });
+      sec.addEventListener('change', function(e){
+        if(e.target && e.target.classList && e.target.classList.contains('ord')) sync();
+      });
+      syncers.push(sync);
+      sync();
+    });
+    window.syncCheckAll=function(){ syncers.forEach(function(f){ f(); }); };
   })();
 </script>
 </body>
