@@ -96,6 +96,12 @@
   .dupmsg .ovr{display:block;font-size:8px;font-weight:600;color:#51596d;text-decoration:underline;cursor:pointer;letter-spacing:.2px;}
   .dupmsg .ovr:hover{color:var(--navy);}
   @media print{ .dupmsg .ovr{display:none;} input.num.dupe{background:transparent!important;} }
+  /* Export dropdown */
+  .exportwrap{position:relative;}
+  .export-menu{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #d7dce6;border-radius:9px;box-shadow:0 10px 30px rgba(12,26,51,.28);padding:5px;display:none;z-index:40;min-width:190px;}
+  .export-menu.open{display:block;}
+  .export-item{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:6px;padding:9px 12px;cursor:pointer;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-size:12px;color:var(--navy);white-space:nowrap;}
+  .export-item:hover{background:var(--light);color:var(--red);}
 </style>
 </head>
 <body>
@@ -110,7 +116,13 @@
     <span class="sync" id="sync">Connecting…</span>
     <button class="btn btn-ghost" id="refreshBtn">Refresh</button>
     <button class="btn btn-ghost" onclick="window.print()">Print</button>
-    <button class="btn btn-red" id="exportBtn">Export CSV</button>
+    <div class="exportwrap">
+      <button class="btn btn-red" id="exportBtn" aria-haspopup="true" aria-expanded="false">Export CSV &#9662;</button>
+      <div class="export-menu" id="exportMenu" role="menu">
+        <button type="button" class="export-item" data-mode="full" role="menuitem">Full CSV</button>
+        <button type="button" class="export-item" data-mode="notordered" role="menuitem">Jerseys Not Ordered</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -574,8 +586,11 @@
   }
   loadFromDB('Connecting…');
   document.getElementById('refreshBtn').addEventListener('click', function(){ loadFromDB('Refreshing…'); });
-  // Export current state to CSV
-  document.getElementById('exportBtn').addEventListener('click', function(){
+  // Export current state to CSV. mode 'full' = every roster row;
+  // mode 'notordered' = only rows NOT yet checked as Ordered, and only players
+  // who actually need a jersey (skips the red-X no-package players).
+  function exportCSV(mode){
+    var notOrdered=(mode==='notordered');
     var FLD=['navyjersey','whitejersey','navypant','whitepant','dryfit','sock','hat'];
     var HDR=['Program','Team','Jersey Pkg','Player','#','Navy Jersey','White Jersey','Navy Pin Pant','White Pant','Dry Fit','Sock','Hat','Ordered'];
     var out=[HDR];
@@ -585,21 +600,36 @@
       var team=sec.querySelector('h2').textContent.trim();
       sec.querySelectorAll('tbody tr').forEach(function(tr){
         if(tr.classList.contains('empty')) return;
+        var pk=tr.querySelector('.pkg');
+        var o=tr.querySelector('input.ord');
+        if(notOrdered){
+          if(o && o.checked) return;                          // already ordered — skip
+          if(pk && pk.classList.contains('no')) return;       // no jersey needed — skip
+        }
         var tds=tr.querySelectorAll('td');
         var name=tr.dataset.player;
         if(!name){ name=((tds[2]?tds[2].textContent:'')+' '+(tds[3]?tds[3].textContent:'')).trim(); }
-        var pk=tr.querySelector('.pkg');
         var row=[pname, team, pk?(pk.classList.contains('ok')?'YES':'NO'):'', name];
         var num=tr.querySelector('input.num'); row.push(num?num.value:'');
         FLD.forEach(function(f){ var i=tr.querySelector('input.sz[data-k$="__'+f+'"]'); row.push(i?i.value:''); });
-        var o=tr.querySelector('input.ord'); row.push(o&&o.checked?'YES':'');
+        row.push(o&&o.checked?'YES':'');
         out.push(row);
       });
     });
     var csv=out.map(function(r){return r.map(function(c){c=(c==null?'':''+c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',');}).join('\n');
     var blob=new Blob([csv],{type:'text/csv'}), a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='cbu_uniform_orders_'+prog+'.csv'; a.click();
-  });
+    a.href=URL.createObjectURL(blob); a.download=(notOrdered?'cbu_jerseys_not_ordered_':'cbu_uniform_orders_')+prog+'.csv'; a.click();
+  }
+  (function(){
+    var btn=document.getElementById('exportBtn'), menu=document.getElementById('exportMenu');
+    function closeMenu(){ menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+    btn.addEventListener('click', function(e){ e.stopPropagation(); var open=menu.classList.toggle('open'); btn.setAttribute('aria-expanded', open?'true':'false'); });
+    menu.querySelectorAll('.export-item').forEach(function(it){
+      it.addEventListener('click', function(){ exportCSV(it.dataset.mode); closeMenu(); });
+    });
+    document.addEventListener('click', function(e){ if(!menu.contains(e.target) && e.target!==btn) closeMenu(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+  })();
   // ---------- sock normalisation (display stays SMALL / MEDIUM / LARGE / EXTRA LARGE) ----------
   function normSock(v){
     v=(v||'').trim().toUpperCase();
