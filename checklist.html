@@ -36,6 +36,8 @@
   .team-bar{display:flex;align-items:baseline;gap:12px;background:var(--navy);color:#fff;border-radius:11px 11px 0 0;padding:13px 18px;}
   .team-bar h2{margin:0;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:18px;}
   .team-bar .cnt{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:var(--gold);}
+  .team-bar .markall{margin-left:auto;align-self:center;padding:6px 10px;font-size:11px;letter-spacing:.5px;white-space:nowrap;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);}
+  .team-bar .markall:hover{background:rgba(255,255,255,.12);}
   .tbl-wrap{overflow-x:auto;border:1px solid #e2e6ee;border-top:0;border-radius:0 0 11px 11px;background:#fff;}
   @media (min-width:1040px){.tbl-wrap{overflow:visible;}}
   table{border-collapse:collapse;width:100%;min-width:900px;}
@@ -719,6 +721,7 @@
         if(window.normalizeSocks) window.normalizeSocks();
         if(window.checkDupes) window.checkDupes();
         if(window.rebuildTally) window.rebuildTally();
+        if(window.updateMarkAllLabels) window.updateMarkAllLabels();
         setSync('ok','Live · shared');
       })
       .catch(function(){ setSync('err','Offline — changes won\'t save'); });
@@ -796,6 +799,25 @@
   document.querySelectorAll('input.sz[data-k$="__sock"]').forEach(function(el){
     el.addEventListener('blur', function(){ var n=normSock(el.value); if(n!==el.value){ el.value=n; refresh(el); scheduleSave(el); } });
   });
+
+  // ---------- Mark-all-ordered button on each team bar ----------
+  document.querySelectorAll('section.team').forEach(function(sec){
+    var bar=sec.querySelector('.team-bar'); if(!bar) return;
+    var btn=document.createElement('button');
+    btn.type='button'; btn.className='btn btn-ghost markall';
+    function boxes(){ return [].slice.call(sec.querySelectorAll('input.ord')); }
+    function setLabel(){ btn.textContent=(boxes().length && boxes().every(function(b){return b.checked;}))?'Unmark All':'Mark All'; }
+    btn.addEventListener('click', function(){
+      var bs=boxes(), on=!bs.every(function(b){return b.checked;});
+      bs.forEach(function(b){ if(b.checked===on) return; b.checked=on; refresh(b); scheduleSave(b); });
+      setLabel();
+    });
+    sec.addEventListener('change', function(e){ if(e.target.classList.contains('ord')) setLabel(); });
+    btn._sync=setLabel;
+    bar.appendChild(btn);
+    setLabel();
+  });
+  window.updateMarkAllLabels=function(){ document.querySelectorAll('.team-bar .markall').forEach(function(b){ if(b._sync) b._sync(); }); };
 
   // ---------- Program + team filters ----------
   var PROGRAMS={tampa:'CBU Tampa', springhill:'CBU Spring Hill', savannah:'CBU Savannah'};
